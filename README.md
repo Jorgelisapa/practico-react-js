@@ -88,9 +88,10 @@ El Virtual DOM es una herramienta que usan tecnologías como React y Vue para 
 Es una copia exacta del DOM, pero mucho más ligera, ya que los cambios no actualizan el verdadero HTML de nuestras páginas web. Gracias al Virtual DOM podemos hacer operaciones y comparaciones de forma sumamente rápida.
 Recuerda que los cambios en el Virtual DOM no afectan el HTML que ven los usuarios, así que debemos estar sincronizando constantemente las copias con el DOM. Pero no te preocupes, React DOM lo hace por nosotros.
 
-Es una herramienta que implementa react para darle performans y velocidad a nuestros desarrollos, esto significa que tenemos una copia exacta del DOM 
-3v. Create React App y Tipos de Componentes
-Creación y Tipos de Componentes
+Es una herramienta que implementa react para darle performans y velocidad a nuestros desarrollos, esto significa que tenemos una copia exacta del DOM.
+
+### 3v. Create React App y Tipos de Componentes
+#### Creación y Tipos de Componentes
 Los nombres de nuestros ‘componentes’ deben empezar con una letra mayúscula, al igual que cada nueva palabra del componente. Esto lo conocemos como Pascal Case o Upper Camel Case.
 Los componentes Stateful son los más robustos de React. Los usamos creando clases que extiendan de React.Component. Nos permiten manejar estado y ciclo de vida (más adelante los estudiaremos a profundidad).
 
@@ -156,5 +157,145 @@ Ahora que entendemos cada una de las fases que tiene el ciclo de vida de react, 
 Estas propiedades reciben el nombre de la función que ejecuta el código que responde a las interacciones de los usuarios. Seguramente, esta función usará la función this.setState para actualizar el estado de nuestro componente.
 Recuerda que los nombres de estos eventos deben seguir la nomenclatura camelCase: primera palabra en minúsculas, iniciales de las siguientes palabras en mayúsculas y el resto también en minúsculas."
 
+
 ## Que es el estado en React?
 En un objeto al cual le podemos definir variables que pueden ser de tipo string, booleanos o funciones y poder acceder al componente al momento en el que se inicializa y esto nos permite tener elementos que vamos a usar.
+
+### Manejando eventos
+Manejar eventos en elementos de React es muy similar a manejar eventos con elementos del DOM. Hay algunas diferencias de sintaxis:
+
+Los eventos de React se nombran usando camelCase, en vez de minúsculas.
+Con JSX pasas una función como el manejador del evento, en vez de un string.
+Por ejemplo, el HTML:
+
+<button onclick="activateLasers()">
+  Activate Lasers
+</button>
+En React es algo diferente:
+
+<button onClick={activateLasers}>
+  Activate Lasers
+</button>
+Otra diferencia es que en React no puedes retornar false para prevenir el comportamiento por defecto. Debes, explícitamente, llamar preventDefault. Por ejemplo, en un HTML plano, para prevenir el comportamiento por defecto de un enlace de abrir una nueva página, puedes escribir:
+
+<a href="#" onclick="console.log('The link was clicked.'); return false">
+  Click me
+</a>
+En cambio en React, esto podría ser:
+
+functionActionLink() {
+  functionhandleClick(e) {
+    e.preventDefault();
+    console.log('The link was clicked.');
+  }
+
+  return (
+    <ahref="#"onClick={handleClick}>
+      Click me
+    </a>
+  );
+}
+Aquí, e es un evento sintético. React define estos eventos sintéticos acorde a las especificaciones W3C, entonces no debes preocuparte por la compatibilidad a tráves de los navegadores. Mira la guía de referencia SyntheticEvent para aprender más.
+
+Cuando estás utilizando React, generalmente, no debes llamar addEventListener para agregar escuchadores de eventos a un elemento del DOM después de que este es creado. Por el contrario, solo debes proveer un manejador de eventos cuando el elemento es inicialmente renderizado.
+
+Cuando defines un componente usando una clase de ES6, un patrón muy común es que los manejadores de eventos sean un método de la clase. Por ejemplo, este componente Toggle renderiza un botón que permite al usuario cambiar el estado entre “ENCENDIDO” y “APAGADO”:
+
+classToggleextendsReact.Component{
+  constructor(props) {
+    super(props);
+    this.state = {isToggleOn: true};
+
+    // Este enlace es necesario para hacer que `this` funcione en el callback
+    this.handleClick = this.handleClick.bind(this);
+  }
+
+  handleClick() {
+    this.setState(state => ({
+      isToggleOn: !state.isToggleOn
+    }));
+  }
+
+  render() {
+    return (
+      <buttononClick={this.handleClick}>
+        {this.state.isToggleOn ? 'ON' : 'OFF'}
+      </button>
+    );
+  }
+}
+
+ReactDOM.render(
+  <Toggle />,
+  document.getElementById('root')
+);
+Pruébalo en CodePen
+
+Tienes que tener mucho cuidado en cuanto al significado de this en los callbacks de JSX. En JavaScript, los métodos de clase no están ligados por defecto. Si olvidas ligar this.handleClick y lo pasas a onClick, this será undefined cuando se llame la función.
+
+Esto no es un comportamiento especifico de React; esto hace parte de como operan las funciones JavaScript. Generalmente, si refieres un método sin usar () después de este, tal como onClick={this.handleClick}, deberías ligar ese método.
+
+Si te molesta llamar bind, existen dos maneras de evitarlo. Si usas la sintaxis experimental campos públicos de clases, puedes usar los campos de clases para ligar los callbacks correctamente:
+
+classLoggingButtonextendsReact.Component{
+  // Esta sintaxis nos asegura que `this` está ligado dentro de handleClick
+  // Peligro: esto es una sintaxis *experimental*
+  handleClick = () => {
+    console.log('this is:', this);
+  }
+
+  render() {
+    return (
+      <buttononClick={this.handleClick}>
+        Click me
+      </button>
+    );
+  }
+}
+Esta sintaxis está habilitada por defecto en Create React App.
+
+Si no estas usando la sintaxis de campos públicos de clases, puedes usar una función flecha en el callback:
+
+classLoggingButtonextendsReact.Component{
+  handleClick() {
+    console.log('this is:', this);
+  }
+
+  render() {
+    // Esta sintaxis nos asegura que `this` esta ligado dentro de handleClick
+    return (
+      <buttononClick={(e) => this.handleClick(e)}>
+        Click me
+      </button>
+    );
+  }
+}
+El problema con esta sintaxis es que un callback diferente es creado cada vez que LogginButton es renderizado. En la mayoría de los casos, esto está bien. Sin embargo, si este callback se pasa como una propiedad a componentes más bajos, estos componentes podrían renderizarse nuevamente. Generalmente, recomendamos ligar en el constructor o usar la sintaxis de campos de clases, para evitar esta clase de problemas de rendimiento.
+
+Pasando argumentos a escuchadores de eventos
+Dentro de un bucle es muy común querer pasar un parámetro extra a un manejador de eventos. Por ejemplo, si id es el ID de una fila, cualquiera de los códigos a continuación podría funcionar:
+
+<button onClick={(e) => this.deleteRow(id, e)}>Delete Row</button>
+<button onClick={this.deleteRow.bind(this, id)}>Delete Row</button>
+Las dos líneas anteriores son equivalentes, y utilizan funciones flecha y Function.prototype.bind respectivamente.
+
+En ambos casos, el argumento e que representa el evento de React va a ser pasado como un segundo argumento después del ID. Con una función flecha, tenemos que pasarlo explícitamente, pero con bind cualquier argumento adicional es pasado automáticamente.
+
+
+## 8v.
+Paso a paso
+En terminal crear capeta: `mkdir` NombreDeCarpeta.
+Inicializar Repositorio (local) en Git : `git init`.
+Inicializar proyecto `npm init -y`. La `-y` significa que se preconfigurará este proyecto y lo va crear automaticamente.
+Abrimos editor de codigo con `code .`.
+
+Armar estructura del proyecto:
+Establecer donde va vivir el codigo: crear carpeta `src` y dentro de ella `index.js`
+Contenedor de todos los archivos a publicar cuando se mande a producción: `public` y dentro de ella `index.html` que será utilizado para publicarse cuando llegue el momento.
+Contenedor de principales archivos del proyecto: `components` 
+Todo esto es lo básico para desarrollar un proyecto.
+
+Luego, corremos el comando: `npm react react-dom` que instalará react y react DOM y con ello aparecen archivos como `package-lock.json`el cual permite manejar el vesionado de todos los paquetes que estamos instalando junto a las dependencias (poco a poco se irá actualizando con la informacion necesaria para vivir) y la carpeta `node_modules` donde estan todos los paquetes y dependencias de los elementos que se iran instalando. Tenemos `package.json` que contendra la historia de los elementos instalados, configuaraciones, scripts y como reconoces nuestro documento.
+
+... Contunúa en repo PLatziVideo
+
