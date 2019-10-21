@@ -1,13 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
+/* import App from './App'; */
 /* import HolaMundo from './components/HolaMundo'; */
 import Button from './components/Button'
 import * as serviceWorker from './serviceWorker';
 
 /* ReactDOM.render(<App />, document.getElementById('root')); */
-
 ReactDOM.render(<Button text="Click 2" />, document.getElementById('root'));
 
 
